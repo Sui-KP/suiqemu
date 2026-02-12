@@ -1,4 +1,5 @@
 # SuiQemu<span style="float:right; font-size:0.5em; font-weight:normal; margin-top:1em;">QEMU for Android</span>
+版本 1.5.202502121700
 ## 📖项目部署
 1.启动Termux(以Google Play版为准)
 

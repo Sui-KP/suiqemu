@@ -140,8 +140,8 @@ local targets="$1"
 local ver=$(cat ../VERSION 2>/dev/null || echo "unknown")
 echo -e "\n压缩等级\n0存储\n1标准\n2最小"
 read -p "🟢输入选项[0-2]" pkg_mode
-local xz_cmd="xz -0"
-[[ "$pkg_mode" == "1" ]] && xz_cmd="xz -6"
+local xz_cmd="xz -0 -T0"
+[[ "$pkg_mode" == "1" ]] && xz_cmd="xz -6 -T0"
 [[ "$pkg_mode" == "2" ]] && xz_cmd="xz -9e -T0"
 mkdir -p ../../suiqemu
 local raw_bins=$(find . -maxdepth 1 -type f -name "qemu-system-*" ! -name "*.*")
@@ -155,7 +155,7 @@ done
 local total=${#bins_to_pack[@]}
 [[ $total -eq 0 ]] && { echo "❌ 未找到匹配文件"; return 1; }
 local bins_str="${bins_to_pack[*]}"
-local cmd_logic="count=0; for bin_path in $bins_str; do ((count++)); arch=\${bin_path#./qemu-system-}; echo \"[\$count/$total] 正在封装 \$arch...\"; strip -s \"\$bin_path\"; tmp=\"temp_pkg_\$arch\"; mkdir -p \"\$tmp\"; cp \"\$bin_path\" \"\$tmp/\"; ldd \"\$(readlink -f \"\$bin_path\")\" | grep \"/data/data/com.termux\" | awk -F '=> ' '{print \$2}' | awk '{print \$1}' | sort -u | xargs -I {} cp -L {} \"\$tmp/\"; printf '#!/bin/sh\nR=\$(cd \"\$(dirname \"\$0\")\"; pwd)\nexport LD_LIBRARY_PATH=\"\$R:\$LD_LIBRARY_PATH\"\nexec \"\$R/%s\" \"\$@\"\n' \"\$(basename \"\$bin_path\")\" > \"\$tmp/qemu.sh\"; chmod +x \"\$tmp/qemu.sh\"; out_name=\"suiqemu-\$(uname -m)-$ver-\$arch.tar.xz\"; tar -C \"\$tmp\" -cf - . | $xz_cmd > \"../../suiqemu/\$out_name\"; rm -rf \"\$tmp\"; done; echo \"🟢 完成\""
+local cmd_logic="count=0; for bin_path in $bins_str; do ((count++)); arch=\${bin_path#./qemu-system-}; echo \"[\$count/$total]\"; strip -s \"\$bin_path\"; tmp=\"temp_pkg_\$arch\"; mkdir -p \"\$tmp\"; cp \"\$bin_path\" \"\$tmp/\"; ldd \"\$(readlink -f \"\$bin_path\")\" | grep \"/data/data/com.termux\" | awk -F '=> ' '{print \$2}' | awk '{print \$1}' | sort -u | xargs -I {} cp -L {} \"\$tmp/\"; find \"\$tmp\" -name \"*.so.*\" -type f | while read -r old; do new=\$(echo \"\$old\" | sed -r 's/(\.so\.[0-9]+).*/\1/'); if [ \"\$old\" != \"\$new\" ]; then mv \"\$old\" \"\$new\"; fi; done; printf '#!/bin/sh\nR=\$(cd \"\$(dirname \"\$0\")\"; pwd)\nexport LD_LIBRARY_PATH=\"\$R:\$LD_LIBRARY_PATH\"\nexec \"\$R/%s\" \"\$@\"\n' \"\$(basename \"\$bin_path\")\" > \"\$tmp/qemu.sh\"; chmod +x \"\$tmp/qemu.sh\"; out_name=\"suiqemu-\$(uname -m)-$ver-\$arch.tar.xz\"; tar -C \"\$tmp\" -cf - . | $xz_cmd > \"../../suiqemu/\$out_name\"; rm -rf \"\$tmp\"; done"
 tui --title "SuiQemu Bundler" --pgb "$cmd_logic"
 }
 do_make() {
@@ -187,7 +187,6 @@ fi
 cd "$SOURCE_DIR"
 pwd > ../.last_dir
 ee "🟡应用补丁"
-echo "补丁版本1.2.0_20260209"
 sed -i 's/shm_open(/open(/g' util/oslib-posix.c
 sed -i 's/shm_unlink(/unlink(/g' util/oslib-posix.c
 sed -i '/ret = close_range(first, last, 0);/c\ret = -1; errno = ENOSYS;' util/oslib-posix.c
@@ -232,7 +231,7 @@ echo "$TARGET_LIST_DEFAULT" | tr ',' '\n' | while read -r line; do ee "🟢$line
 exit 1
 }
 clear
-echo -e "${GREEN}SuiQemu\nAndroid $(uname -m)${NC}"
+echo -e "${GREEN}SuiQemu\nAndroid $(uname -m)\n1.5.202502121700${NC}"
 [[ $# -eq 0 ]] && show_help
 arg="${2#--target-list=}"
 case "$1" in
