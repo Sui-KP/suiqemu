@@ -16,13 +16,15 @@ package             打包编译产物
 ```
 4.回车默认不打包,若打包则最终产物在`{HOME}/suiqemu`文件夹
 
-5.打包默认不包含BIOS等固件,可`suiqemu-{版本号}`源码目录执行
+5.打包默认不包含BIOS等固件,可在`suiqemu-{版本号}`源码目录执行
 ```
 git sparse-checkout set pc-bios
 ```
-获取必要固件
+获取固件,并按照qemu提示按需复制固件到qemu程序所在目录
 
-6.一些仿真架构可能会提示`Illegal Instruction`(非法指令),暂无解
+6.打包产物可在`/data/local/tmp`解压,赋予解压到目录所有文件及文件夹可执行权限后,在解压到目录键入./qemu.sh {参数}以使用
+
+7.一些仿真架构可能会提示`Illegal Instruction`(非法指令),暂无解
 ## 📢项目来历
 **在Android编译QEMU很难吗?<br>
 不难。**<br>
